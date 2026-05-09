@@ -393,14 +393,15 @@ class Search
                     }
                     break;
                 case '#':
-                    $issues = Workflow::requestApi('/repos/'.$parts[0].'/issues?sort=updated&state=all', transformItem: static function (stdClass $issue) use ($parts) {
+                    $numberQuery = filter_var(substr($parts[1], 1), FILTER_VALIDATE_INT);
+                    $issues = Workflow::requestApi('/repos/'.$parts[0].'/issues?sort=updated&state=all', transformItem: static function (stdClass $issue) use ($parts, $numberQuery) {
                         return Item::create()
                             ->title($issue->title)
                             ->comparator($parts[0].' #'.$issue->number.' '.$issue->title)
                             ->subtitle('#'.$issue->number)
                             ->icon(isset($issue->pull_request) ? 'pull-request' : 'issue')
                             ->arg($issue->html_url)
-                            ->prio(strtotime($issue->updated_at));
+                            ->prio($numberQuery && $issue->number === $numberQuery ? PHP_INT_MAX : strtotime($issue->updated_at));
                     });
                     foreach ($issues as $issue) {
                         Workflow::addItemIfMatches($issue);
